@@ -1,6 +1,5 @@
 module libs::offchain_merkle_tree {
     use libs::queue;
-    // use sui::tx_context::TxContext;
 
     struct OffchainMerkleTree has store {
         count: u128,
@@ -13,5 +12,9 @@ module libs::offchain_merkle_tree {
 
     // fun init(ctx: &mut TxContext) {
     //
+    // }
+
+    // fun insert_note(self: &mut OffchainMerkleTree,note: EncodedNote) {
+    //     let hashed_note =
     // }
 }
