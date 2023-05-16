@@ -3,14 +3,15 @@ module libs::queue {
     use sui::table;
     use std::vector::length;
     use std::vector;
+    use sui::tx_context::TxContext;
 
     const EEmptyQueue: u64 = 1;
     const EInsufficientQueue: u64 = 2;
 
     struct Queue has store {
-        first: u128,
-        last: u128,
-        queue: Table<u128, u256>,
+        first: u64,
+        last: u64,
+        queue: Table<u64, u256>,
     }
 
     public fun initialize(queue: &mut Queue) {
@@ -19,7 +20,7 @@ module libs::queue {
         }
     }
 
-    public fun enqueue(queue: &mut Queue, item: u256): u128 {
+    public fun enqueue(queue: &mut Queue, item: u256): u64 {
         let last = queue.last + 1;
         queue.last = last;
         if (item != 0) {
@@ -40,7 +41,7 @@ module libs::queue {
         return item
     }
 
-    public fun batch_enqueue(queue: &mut Queue, items: vector<u256>): u128 {
+    public fun batch_enqueue(queue: &mut Queue, items: vector<u256>): u64 {
         let last = queue.last;
         let i: u64 = 0;
         loop {
@@ -59,12 +60,12 @@ module libs::queue {
         return last
     }
 
-    public fun batch_dequeue(queue: &mut Queue, num: u128): vector<u256> {
+    public fun batch_dequeue(queue: &mut Queue, num: u64): vector<u256> {
         let last = queue.last;
         let first = queue.first;
         assert!(i_lenth(last, first) >= num, EInsufficientQueue);
         let items: &mut vector<u256> = &mut vector::empty<u256>();
-        let i: u128 = 0;
+        let i = 0;
         loop {
             if (i < num) {
                 vector::push_back(items, *table::borrow(&queue.queue, first));
@@ -81,7 +82,7 @@ module libs::queue {
 
     public fun contains(queue: &mut Queue, item: u256): bool {
         let first = queue.first;
-        let last: u128 = queue.last;
+        let last= queue.last;
         loop {
             if (first <= last) {
                 if (*table::borrow(&queue.queue, first) == item) {
@@ -108,13 +109,21 @@ module libs::queue {
         queue.last < queue.first
     }
 
-    public fun lenth(queue: &mut Queue): u128 {
+    public fun lenth(queue: &mut Queue): u64 {
         let last = queue.last;
         let first = queue.first;
         return i_lenth(last, first)
     }
 
-    fun i_lenth(last: u128, first: u128): u128 {
+    fun i_lenth(last: u64, first: u64): u64 {
         return last + 1 - first
+    }
+
+    public fun create_queue(ctx: &mut TxContext): Queue {
+        Queue {
+            first: 1,
+            last: 0,
+            queue: table::new(ctx)
+        }
     }
 }

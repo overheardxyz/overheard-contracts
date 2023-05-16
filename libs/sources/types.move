@@ -42,19 +42,27 @@ module libs::types {
     struct EncodedNote has drop, store {
         owner_H1: u256,
         owner_H2: u256,
-        nonce: u256,
+        nonce: u64,
         // encoded_asset_addr: u256,
         // encoded_asset_id: u256,
-        value: u256,
+        value: u64,
     }
 
-    struct DepositRequest has store {
+    struct DepositRequest has copy,drop,store {
         spender: address,
         //encoded_asset: EncodedAsset,
         value: u64,
         deposit_addr: StealthAddress,
         nonce: u64,
         gas_compensation: u64,
+    }
+
+    public fun get_deposit_addr(deposit_request: DepositRequest): StealthAddress {
+        deposit_request.deposit_addr
+    }
+
+    public fun get_deposit_value(deposit_request: DepositRequest): u64 {
+        deposit_request.value
     }
 
     struct Action has store {
@@ -96,17 +104,13 @@ module libs::types {
     public fun create_encoded_note(
         owner_H1: u256,
         owner_H2: u256,
-        nonce: u256,
-        // encoded_asset_addr: u256,
-        // encoded_asset_id: u256,
-        value: u256
+        nonce: u64,
+        value: u64
     ): EncodedNote {
         EncodedNote {
             owner_H1,
             owner_H2,
             nonce,
-            // encoded_asset_addr,
-            // encoded_asset_id,
             value,
         }
     }
@@ -134,5 +138,21 @@ module libs::types {
             h2_x,
             h2_y
         }
+    }
+
+    public fun get_h1_x(stealth_addr: StealthAddress): u256 {
+        stealth_addr.h1_x
+    }
+
+    public fun get_h2_x(stealth_addr: StealthAddress): u256 {
+        stealth_addr.h2_x
+    }
+
+    public fun get_h1_y(stealth_addr: StealthAddress): u256 {
+        stealth_addr.h1_y
+    }
+
+    public fun get_h2_y(stealth_addr: StealthAddress): u256 {
+        stealth_addr.h2_y
     }
 }
