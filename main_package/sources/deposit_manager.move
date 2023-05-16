@@ -189,4 +189,9 @@ module main_package::deposit_manager {
     public fun get_global_tree(state: &mut State): &mut OffchainMerkleTree {
         &mut state.global_note_commitment_tree
     }
+
+    #[test_only]
+    public fun init_for_testing(ctx: &mut TxContext) {
+        init(ctx);
+    }
 }
