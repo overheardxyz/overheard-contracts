@@ -2,3 +2,5 @@ build
 .idea
 Move.lock
 sui.log.*
+node_modules
+package-lock.json

@@ -30,7 +30,7 @@ module libs::offchain_merkle_tree {
     }
 
     fun insert_update(self: &mut OffchainMerkleTree, update: vector<u8>) {
-        *vector::borrow_mut(&mut self.batch, self.batch_len) = update;
+        vector::push_back(&mut self.batch, update);
         self.batch_len = self.batch_len + 1;
 
         if (self.batch_len == BATCH_SIZE) {
@@ -43,6 +43,7 @@ module libs::offchain_merkle_tree {
         let accumulator_hash = compute_accumulator_hash(self);
         enqueue(&mut self.accumulator_queue, accumulator_hash);
         self.batch_len = 0;
+        self.batch = vector::empty<vector<u8>>();
     }
 
     fun compute_accumulator_hash(self: &mut OffchainMerkleTree): u256 {
@@ -51,16 +52,16 @@ module libs::offchain_merkle_tree {
         to_u256(from_bytes(accumulator_hash_bytes))
     }
 
-    public fun get_count(self: &mut OffchainMerkleTree):u64 {
+    public fun get_count(self: &mut OffchainMerkleTree): u64 {
         self.count
     }
 
-    public fun get_root(self: &mut OffchainMerkleTree):u256 {
+    public fun get_root(self: &mut OffchainMerkleTree): u256 {
         self.root
     }
 
     public fun get_total_count(self: &mut OffchainMerkleTree): u64 {
-        self.count + self.batch_len + BATCH_SIZE*lenth(&mut self.accumulator_queue)
+        self.count + self.batch_len + BATCH_SIZE * lenth(&mut self.accumulator_queue)
     }
 
     public fun create_tree(ctx: &mut TxContext): OffchainMerkleTree {

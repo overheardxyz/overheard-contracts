@@ -23,11 +23,14 @@ module main_package::deposit_manager {
     const ESpender: u64 = 2;
     const EDepositNotExist: u64 = 3;
     const EDepositState: u64 = 4;
+    const EAdminPermission: u64 = 5;
 
     struct State has key {
         id: UID,
         nonce: u64,
+        admin: address,
         outstanding_deposit_hashes: Table<vector<u8>, bool>,
+        screener: Table<address,bool>,
         global_note_commitment_tree: OffchainMerkleTree
     }
 
@@ -45,9 +48,26 @@ module main_package::deposit_manager {
         transfer::share_object(State {
             id: object::new(ctx),
             nonce: 0,
+            admin: tx_context::sender(ctx),
             outstanding_deposit_hashes: table::new(ctx),
+            screener: table::new(ctx),
             global_note_commitment_tree: tree
         })
+    }
+
+    public entry fun setScreenerPermission(
+        state: &mut State,
+        screener: address,
+        permission: bool,
+        ctx: &mut TxContext
+    ){
+        assert!(state.admin == tx_context::sender(ctx),EAdminPermission);
+        if (table::contains(&state.screener,screener)) {
+            *table::borrow_mut(&mut state.screener,screener) = permission;
+        } else {
+            table::add(&mut state.screener,screener,permission);
+        }
+        // TODO:emit events
     }
 
     public entry fun instantiate_multi_deposit(
