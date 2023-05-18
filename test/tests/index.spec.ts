@@ -8,8 +8,12 @@ import {secp256k1} from '@noble/curves/secp256k1';
 import {fromB64, toB64, toHEX} from '@mysten/bcs';
 import {sha256} from '@noble/hashes/sha256';
 import {SIGNATURE_SCHEME_TO_FLAG} from "@mysten/sui.js/src/cryptography/signature";
+import {bytes} from "@noble/hashes/_assert";
 
 const mnemonic = "trash north romance minute bracket blame vague feel poet remove wait around";
+
+const {BCS, getSuiMoveConfig} = require("@mysten/bcs");
+const bcs = new BCS(getSuiMoveConfig());
 
 describe('secp256k1-keypair', () => {
     it('create keypair and address from mnemonic', () => {
@@ -35,4 +39,17 @@ describe('secp256k1-keypair', () => {
             ),
         ).toBeTruthy();
     });
+    it('test bcs ser', function () {
+        let arr = "06d45ae2fea275e69d9a219bcae991d2f99e5535321c4bb0c8d30c39bf4d290b1e2b2e706ab0366f1fecbba112a0bbb606fb00ddb9941c3ae5eb32c7811691ed00"
+        console.log(hexToArr(arr));
+    });
 });
+
+function hexToArr(hexString: string): any[] {
+    let arr = new Array();
+    for (let i = 0; i < hexString.length; i += 2) {
+        let byte = parseInt(hexString.substring(i, i + 2), 16);
+        arr.push(byte);
+    }
+    return arr;
+}

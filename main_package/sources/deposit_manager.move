@@ -17,6 +17,10 @@ module main_package::deposit_manager {
     use sui::bcs::to_bytes;
     use libs::offchain_merkle_tree::{OffchainMerkleTree, create_tree};
     use main_package::teller;
+    use sui::ecdsa_k1;
+    use sui::hash::blake2b256;
+    use sui::address::from_bytes;
+    use sui::event;
 
     const EInsufficientCoin: u64 = 0;
     const ECompSplit: u64 = 1;
@@ -24,13 +28,18 @@ module main_package::deposit_manager {
     const EDepositNotExist: u64 = 3;
     const EDepositState: u64 = 4;
     const EAdminPermission: u64 = 5;
+    const EScreenerPermission: u64 = 6;
+
+    struct TestEvent has copy, drop {
+        signature: vector<u8>
+    }
 
     struct State has key {
         id: UID,
         nonce: u64,
         admin: address,
         outstanding_deposit_hashes: Table<vector<u8>, bool>,
-        screener: Table<address,bool>,
+        screener: Table<address, bool>,
         global_note_commitment_tree: OffchainMerkleTree
     }
 
@@ -60,12 +69,12 @@ module main_package::deposit_manager {
         screener: address,
         permission: bool,
         ctx: &mut TxContext
-    ){
-        assert!(state.admin == tx_context::sender(ctx),EAdminPermission);
-        if (table::contains(&state.screener,screener)) {
-            *table::borrow_mut(&mut state.screener,screener) = permission;
+    ) {
+        assert!(state.admin == tx_context::sender(ctx), EAdminPermission);
+        if (table::contains(&state.screener, screener)) {
+            *table::borrow_mut(&mut state.screener, screener) = permission;
         } else {
-            table::add(&mut state.screener,screener,permission);
+            table::add(&mut state.screener, screener, permission);
         }
         // TODO:emit events
     }
@@ -129,25 +138,33 @@ module main_package::deposit_manager {
         h2_y: u256,
         nonce: u64,
         gas_compensation: u64,
-        // signature: vector<u8>,
+        signature: vector<u8>,
         // ctx: &mut TxContext
     ) {
-        //TODO:Recover and check screener signature
-
         let deposit_addr = create_stealth_addr(h1_x, h1_y, h2_x, h2_y);
+        let req = create_deposit_request(spender, value, deposit_addr, nonce, gas_compensation);
+        let signer = recover_addr_from_signature(signature, to_bytes(&req));
+        assert!(*table::borrow(&state.screener, signer) == true, EScreenerPermission);
         let deposit_request_hash = hash_deposit_request(spender, value, deposit_addr, nonce, gas_compensation);
         assert!(table::contains(&state.outstanding_deposit_hashes, deposit_request_hash), EDepositNotExist);
         assert!(*table::borrow(&state.outstanding_deposit_hashes, deposit_request_hash) == true, EDepositState);
 
         *table::borrow_mut(&mut state.outstanding_deposit_hashes, deposit_request_hash) = false;
         let tree = get_global_tree(state);
-        let req = create_deposit_request(spender, value, deposit_addr, nonce, gas_compensation);
+
         teller::deposit_funds(tree, req);
 
 
         //TODO:compute gas fee and pay gas compensation.
 
         //TODO:emit events
+        let test = x"06d45ae2fea275e69d9a219bcae991d2f99e5535321c4bb0c8d30c39bf4d290b1e2b2e706ab0366f1fecbba112a0bbb606fb00ddb9941c3ae5eb32c7811691ed00";
+        event::emit(TestEvent {
+            signature: test
+        });
+        event::emit(TestEvent {
+            signature
+        });
     }
 
     public entry fun retrieve_deposit(
@@ -173,6 +190,14 @@ module main_package::deposit_manager {
         transfer::public_transfer(retrieve_coin, tx_context::sender(ctx));
         //TODO:should send back gas compensation
         //TODO:emit events
+    }
+
+    fun recover_addr_from_signature(signature: vector<u8>, msg: vector<u8>): address {
+        let pk = ecdsa_k1::secp256k1_ecrecover(&signature, &msg, 1);
+        let tmp = vector::empty<u8>();
+        vector::push_back(&mut tmp, 1);
+        vector::append(&mut tmp, pk);
+        from_bytes(blake2b256(&tmp))
     }
 
     fun sum(items: vector<u64>): u64 {
