@@ -15,12 +15,11 @@ module main_package::deposit_manager {
     use libs::types::{StealthAddress, create_stealth_addr, create_deposit_request};
     use sui::table;
     use sui::bcs::to_bytes;
-    use libs::offchain_merkle_tree::{OffchainMerkleTree, create_tree};
+    use libs::offchain_merkle_tree::{OffchainMerkleTree, create_tree, apply_subtree_update};
     use main_package::teller;
     use sui::ecdsa_k1;
     use sui::hash::blake2b256;
     use sui::address::from_bytes;
-    use sui::event;
 
     const EInsufficientCoin: u64 = 0;
     const ECompSplit: u64 = 1;
@@ -29,10 +28,6 @@ module main_package::deposit_manager {
     const EDepositState: u64 = 4;
     const EAdminPermission: u64 = 5;
     const EScreenerPermission: u64 = 6;
-
-    struct TestEvent has copy, drop {
-        signature: vector<u8>
-    }
 
     struct State has key {
         id: UID,
@@ -158,13 +153,6 @@ module main_package::deposit_manager {
         //TODO:compute gas fee and pay gas compensation.
 
         //TODO:emit events
-        let test = x"06d45ae2fea275e69d9a219bcae991d2f99e5535321c4bb0c8d30c39bf4d290b1e2b2e706ab0366f1fecbba112a0bbb606fb00ddb9941c3ae5eb32c7811691ed00";
-        event::emit(TestEvent {
-            signature: test
-        });
-        event::emit(TestEvent {
-            signature
-        });
     }
 
     public entry fun retrieve_deposit(
@@ -190,6 +178,16 @@ module main_package::deposit_manager {
         transfer::public_transfer(retrieve_coin, tx_context::sender(ctx));
         //TODO:should send back gas compensation
         //TODO:emit events
+    }
+
+    //TODO: remove this to commitment_tree_manager_contract
+    public entry fun applySubtreeUpdate(
+        state: &mut State,
+        new_root: u256,
+        // proof: vector<u256>
+    ) {
+        apply_subtree_update(&mut state.global_note_commitment_tree, new_root);
+        //TODO: emit events
     }
 
     fun recover_addr_from_signature(signature: vector<u8>, msg: vector<u8>): address {

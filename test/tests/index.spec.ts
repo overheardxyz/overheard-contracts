@@ -26,11 +26,9 @@ describe('secp256k1-keypair', () => {
         const signData = new TextEncoder().encode('Hello, world!');
         const msgHash = sha256(signData);
         const sig = keypair.signData(signData);
-        console.log(keypair.getPublicKey().toSuiAddress());
         let tmp = new Uint8Array(34);
         tmp.set([0x01])
         tmp.set(keypair.getPublicKey().toBytes(), 1);
-        console.log(toB64(tmp));
         expect(
             secp256k1.verify(
                 secp256k1.Signature.fromCompact(sig),
@@ -39,17 +37,4 @@ describe('secp256k1-keypair', () => {
             ),
         ).toBeTruthy();
     });
-    it('test bcs ser', function () {
-        let arr = "06d45ae2fea275e69d9a219bcae991d2f99e5535321c4bb0c8d30c39bf4d290b1e2b2e706ab0366f1fecbba112a0bbb606fb00ddb9941c3ae5eb32c7811691ed00"
-        console.log(hexToArr(arr));
-    });
 });
-
-function hexToArr(hexString: string): any[] {
-    let arr = new Array();
-    for (let i = 0; i < hexString.length; i += 2) {
-        let byte = parseInt(hexString.substring(i, i + 2), 16);
-        arr.push(byte);
-    }
-    return arr;
-}

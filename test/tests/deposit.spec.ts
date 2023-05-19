@@ -86,7 +86,6 @@ describe('test deposit funds', () => {
             tx, options: {showObjectChanges: true, showEffects: true, showEvents: true, showInput: true}
         })
         expect(`${JSON.stringify(resultOfExec.effects.status.status, null, 2)}`).toEqual(`"success"`);
-        console.log(`${JSON.stringify(resultOfExec.effects.status.status, null, 2)}`);
     });
     it('set screener', async () => {
         let tx = new TransactionBlock();
@@ -103,7 +102,6 @@ describe('test deposit funds', () => {
             transactionBlock:
             tx, options: {showObjectChanges: true, showEffects: true, showEvents: true, showInput: true}
         })
-        console.log(`${JSON.stringify(resultOfExec.effects.status.status, null, 2)}`);
         expect(`${JSON.stringify(resultOfExec.effects.status.status, null, 2)}`).toEqual(`"success"`);
     });
     it('complete deposit', async () => {
@@ -154,7 +152,6 @@ describe('test deposit funds', () => {
             transactionBlock:
             tx, options: {showObjectChanges: true, showEffects: true, showEvents: true, showInput: true}
         })
-        console.log(`${JSON.stringify(resultOfExec, null, 2)}`);
         expect(`${JSON.stringify(resultOfExec.effects.status.status, null, 2)}`).toEqual(`"success"`);
     });
 });
