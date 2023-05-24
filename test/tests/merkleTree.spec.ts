@@ -4,6 +4,8 @@ import {poseidonBN} from "@nocturne-xyz/circuit-utils";
 import {sha256} from "@noble/hashes/sha256";
 import {toHEX} from "@mysten/bcs";
 import {hexToNumber} from "@noble/curves/abstract/utils";
+import {subtreeUpdateInputsFromBatch} from "@nocturne-xyz/sdk/src/proof/subtreeUpdate";
+import {bigInt256ToFieldElems} from "@nocturne-xyz/sdk";
 
 const {BCS, getSuiMoveConfig} = require("@mysten/bcs");
 const bcs = new BCS(getSuiMoveConfig());
@@ -37,5 +39,20 @@ describe('test merkle tree', () => {
         console.log(toHEX(sha256(bytes)));
         // merkleTree.insert(hexToNumber(toHEX(sha256(bytes))));
         console.log(merkleTree.root);
+    });
+
+    it('proof tree', () => {
+        let proof = merkleTree.createProof(0);
+        console.log(proof)
+        let batch = merkleTree.leaves;
+        let input = subtreeUpdateInputsFromBatch(batch,proof);
+        console.log(input)
+    });
+    it('test bigIntToFieldElems', function () {
+        // @ts-ignore
+        let num = 9533201250583817767896570092866591469094150406835227552485691564931228351592n;
+        let field = bigInt256ToFieldElems(num);
+        console.log(field)
+        console.log(merkleTree)
     });
 })
