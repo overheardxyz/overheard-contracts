@@ -23,28 +23,30 @@ describe('test merkle tree', () => {
             nonce: BCS.U64,
             value: BCS.U64
         })
-        let accArr = [];
-        for (let i = 0; i < 16; i++){
-            let note_bytes = bcs.ser("EncodedNote",{
-                owner_H1: 0x1,
-                owner_H2: 0x1,
-                nonce: i,
-                value: 1
-            }).toBytes();
-            let note_hash_hex = toHEX(sha256(note_bytes))
-            accArr.push(note_hash_hex);
-            merkleTree.insert(hexToNumber(note_hash_hex));
+        for (let n = 0; n < 2; n++) {
+            let accArr = [];
+            for (let i = 0; i < 16; i++){
+                let note_bytes = bcs.ser("EncodedNote",{
+                    owner_H1: 0x1,
+                    owner_H2: 0x1,
+                    nonce: 16*n+i,
+                    value: 1
+                }).toBytes();
+                let note_hash_hex = toHEX(sha256(note_bytes))
+                accArr.push(note_hash_hex);
+                merkleTree.insert(hexToNumber(note_hash_hex));
+            }
+            let bytes = bcs.ser(["vector", BCS.HEX],accArr).toBytes();
+            console.log(toHEX(sha256(bytes)));
         }
-        let bytes = bcs.ser(["vector", BCS.HEX],accArr).toBytes();
-        console.log(toHEX(sha256(bytes)));
         // merkleTree.insert(hexToNumber(toHEX(sha256(bytes))));
         console.log(merkleTree.root);
     });
 
     it('proof tree', () => {
-        let proof = merkleTree.createProof(0);
+        let proof = merkleTree.createProof(16);
         console.log(proof)
-        let batch = merkleTree.leaves;
+        let batch = merkleTree.leaves.slice(16,32);
         let input = subtreeUpdateInputsFromBatch(batch,proof);
         console.log(input)
     });
